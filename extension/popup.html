@@ -3,14 +3,40 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gemini QR Lens</title>
+  <title>QR To Text</title>
   <link rel="stylesheet" href="styles.css">
+  <style>
+    /* Checkbox Styles override for specific colors */
+    .checkbox-container {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      margin-top: 1.25rem;
+      padding-top: 1.25rem;
+      border-top: 1px solid var(--border-dim);
+      color: var(--text-dim);
+      font-size: 0.85rem;
+      cursor: pointer;
+      user-select: none;
+      transition: color 0.2s;
+    }
+    .checkbox-container input {
+      accent-color: var(--primary);
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+    }
+    .checkbox-container:hover {
+      color: var(--text-main);
+    }
+  </style>
 </head>
 <body>
   <div class="app-container">
     <header>
       <div class="logo-icon">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:white"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/></svg>
+        <!-- QR Scan Icon -->
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/></svg>
       </div>
       <h1>QR To Text</h1>
     </header>
@@ -21,7 +47,7 @@
         <div class="drop-zone flex-center flex-col w-full" id="drop-area">
           <input type="file" id="file-input" class="hidden" accept="image/*">
           <div class="icon-upload">
-            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#818cf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ea580c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
           </div>
           <h3>Select QR Image</h3>
           <p>Drag & drop or Paste (Ctrl+V)</p>
@@ -31,7 +57,7 @@
       <!-- Loading View -->
       <div id="loading-view" class="hidden flex-center flex-col">
         <div class="spinner"></div>
-        <h3>Decoding...</h3>
+        <h3 style="color:var(--text-dim); font-weight:500;">Decoding...</h3>
       </div>
 
       <!-- Result View -->
@@ -39,15 +65,15 @@
         <div class="result-header">
           <img id="result-thumb" class="thumb-img" src="" alt="Thumbnail">
           <div>
-            <h2 style="font-size:1.1rem; margin:0 0 0.2rem 0; color:white;">Success</h2>
-            <p style="margin:0; font-size:0.875rem; color:#94a3b8;">Content decoded</p>
+            <h2 style="font-size:1.1rem; margin:0 0 0.2rem 0; color:var(--text-main); font-weight:600;">Analysis Complete</h2>
+            <p style="margin:0; font-size:0.85rem; color:var(--text-dim);">Successfully decoded</p>
           </div>
         </div>
 
         <div class="text-area-container">
           <div class="label-row">
-            <span>Content</span>
-            <span id="char-count">0 chars</span>
+            <span>Raw Data</span>
+            <span id="char-count" style="color:var(--text-dim); font-weight:400;">0 chars</span>
           </div>
           <textarea id="result-text" readonly></textarea>
         </div>
@@ -59,10 +85,17 @@
           </button>
           
           <button id="btn-action" class="btn-secondary">
+            <!-- Icon injected by JS -->
             <span id="action-icon"></span>
             <span id="action-text">Scan New</span>
           </button>
         </div>
+
+        <!-- Auto Close Checkbox -->
+        <label class="checkbox-container">
+          <input type="checkbox" id="auto-close">
+          <span>Close window after action</span>
+        </label>
       </div>
 
       <!-- Error View -->
@@ -70,9 +103,9 @@
         <div class="error-icon">
           <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
         </div>
-        <h3 style="margin-bottom:0.5rem; color:white;">Failed to Read</h3>
+        <h3 style="margin-bottom:0.5rem; color:var(--text-main);">Failed to Read</h3>
         <p id="error-msg" class="error-msg">Could not detect code</p>
-        <button id="btn-retry" class="btn-secondary" style="padding: 0.5rem 1.5rem;">Try Again</button>
+        <button id="btn-retry" class="btn-secondary" style="padding: 0.7rem 2rem; border-color:var(--border-red);">Try Again</button>
       </div>
 
     </main>

@@ -1,3 +1,4 @@
+
 // Elements
 const views = {
   upload: document.getElementById('upload-view'),
@@ -16,6 +17,7 @@ const btnAction = document.getElementById('btn-action');
 const btnRetry = document.getElementById('btn-retry');
 const errorMsg = document.getElementById('error-msg');
 const actionText = document.getElementById('action-text');
+const autoCloseCheckbox = document.getElementById('auto-close');
 
 // State
 let currentText = '';
@@ -75,7 +77,10 @@ function showResult(text, imageUrl) {
       <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" x2="21" y1="14" y2="3"/></svg>
       <span>Open Link</span>
     `;
-    btnAction.onclick = () => window.open(text, '_blank');
+    btnAction.onclick = () => {
+      window.open(text, '_blank');
+      handleAutoClose();
+    };
   } else {
     btnAction.className = 'btn-secondary';
     btnAction.innerHTML = `
@@ -92,6 +97,12 @@ function isValidUrl(string) {
   try { new URL(string); return true; } catch (_) { return false; }
 }
 
+function handleAutoClose() {
+  if (autoCloseCheckbox.checked) {
+    setTimeout(() => window.close(), 300);
+  }
+}
+
 // --- Decoding Logic (Native + API Fallback) ---
 async function decodeQR(src, fileBlob) {
   const img = new Image();
@@ -104,7 +115,6 @@ async function decodeQR(src, fileBlob) {
   });
 
   // 1. Try Native BarcodeDetector (Chrome built-in)
-  // Check if API exists and supports 'qr_code'
   if ('BarcodeDetector' in window) {
     try {
       const formats = await BarcodeDetector.getSupportedFormats();
@@ -149,19 +159,19 @@ fileInput.addEventListener('change', (e) => processFile(e.target.files[0]));
 
 dropArea.addEventListener('dragover', (e) => {
   e.preventDefault();
-  dropArea.style.borderColor = '#6366f1';
-  dropArea.style.backgroundColor = 'rgba(30, 41, 59, 0.8)';
+  dropArea.style.borderColor = '#ea580c'; // Blood Orange
+  dropArea.style.backgroundColor = '#18181b';
 });
 
 dropArea.addEventListener('dragleave', () => {
-  dropArea.style.borderColor = '#334155';
-  dropArea.style.backgroundColor = 'rgba(30, 41, 59, 0.5)';
+  dropArea.style.borderColor = '#27272a';
+  dropArea.style.backgroundColor = '#09090b';
 });
 
 dropArea.addEventListener('drop', (e) => {
   e.preventDefault();
-  dropArea.style.borderColor = '#334155';
-  dropArea.style.backgroundColor = 'rgba(30, 41, 59, 0.5)';
+  dropArea.style.borderColor = '#27272a';
+  dropArea.style.backgroundColor = '#09090b';
   if (e.dataTransfer.files[0]) processFile(e.dataTransfer.files[0]);
 });
 
@@ -177,19 +187,33 @@ document.addEventListener('paste', (e) => {
   }
 });
 
-// 3. Result Actions
+// 3. Checkbox State Management
+const savedAutoClose = localStorage.getItem('autoClose');
+autoCloseCheckbox.checked = savedAutoClose === 'true';
+
+autoCloseCheckbox.addEventListener('change', (e) => {
+  localStorage.setItem('autoClose', e.target.checked);
+});
+
+// 4. Result Actions
 btnCopy.addEventListener('click', () => {
   navigator.clipboard.writeText(currentText);
   const originalHtml = btnCopy.innerHTML;
-  btnCopy.innerHTML = `<span style="color:#4ade80">Copied!</span>`;
-  setTimeout(() => {
-    btnCopy.innerHTML = originalHtml;
-  }, 1500);
+  btnCopy.innerHTML = `<span style="color:#22c55e">Copied!</span>`; // Green success text
+  
+  if (autoCloseCheckbox.checked) {
+    // Short delay to see feedback, then close
+    setTimeout(() => window.close(), 600);
+  } else {
+    setTimeout(() => {
+      btnCopy.innerHTML = originalHtml;
+    }, 1500);
+  }
 });
 
 btnRetry.addEventListener('click', resetApp);
 
-// 4. Initialize from URL Param (Context Menu)
+// 5. Initialize from URL Param (Context Menu)
 window.addEventListener('DOMContentLoaded', () => {
   const params = new URLSearchParams(window.location.search);
   const src = params.get('src');
