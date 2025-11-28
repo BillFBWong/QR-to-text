@@ -1,0 +1,7 @@
+{
+  "name": "QR Code to Text",
+  "description": "A streamlined tool to instantly convert QR code images into text or URLs. Right-click and copy an image, or drag and drop to decode.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
