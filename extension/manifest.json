@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "QR Code to Text",
+  "version": "1.0",
+  "description": "Instantly convert QR code images into text or URLs. Right-click an image to decode.",
+  "permissions": [
+    "contextMenus",
+    "clipboardRead"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "Scan QR Code"
+  }
+}
