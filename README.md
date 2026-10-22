@@ -52,7 +52,7 @@ The root directory contains a React-based version of the tool, perfect for hosti
 npm install
 
 # Start development server
-npm start
+npm run dev
 ```
 
 ### Tech Stack
