@@ -9,7 +9,7 @@ A high-performance, privacy-focused tool to instantly convert QR code images int
 ## ✨ Features
 
 - **🚀 Zero Latency:** Uses the browser's native `BarcodeDetector` API for instant, client-side decoding.
-- **🛡️ Robust Fallback:** Automatically handles "stylish" or damaged QR codes by falling back to a specialized API (`api.qrserver.com`) if local decoding fails.
+- **🛡️ Robust Fallback:** Both the web app and extension bundle jsQR for offline decoding when native detection is unavailable. A remote API (`api.qrserver.com`) is tried only if both local decoders fail; network and service errors are reported separately.
 - **🎨 Modern Dark UI:** Designed with a "Black / Dim Red / Blood Orange" aesthetic for high contrast and visual appeal.
 - **👆 Seamless Workflow:**
   - **Drag & Drop:** Drop images directly into the interface.
@@ -60,7 +60,17 @@ npm start
 - **Framework:** React 19
 - **Styling:** Tailwind CSS (Web) / Vanilla CSS Variables (Extension)
 - **Icons:** Lucide React
-- **Decoding:** Native `BarcodeDetector` API + `jsQR` (Web fallback) + Remote API (Final fallback)
+- **Decoding:** Native `BarcodeDetector` API + bundled `jsQR` (Web and Extension) + Remote API (Final fallback)
+
+### Decoder maintenance and checks
+
+The standalone extension includes `extension/vendor/jsQR.js` and its license. After changing the pinned jsQR dependency, run `npm run sync:decoder` and include the updated bundle. Reload the extension at `chrome://extensions/` after updating its files.
+
+- `npm test` checks offline decoding with a real QR fixture and API failure handling.
+- `npm run build` builds the web app.
+- `npm run check:api` uploads only the synthetic test fixture and exits unsuccessfully unless the remote API returns its exact payload.
+
+The remote upload API accepts PNG, GIF or JPEG files smaller than 1 MiB ([provider documentation](https://goqr.me/api/doc/read-qr-code/)). Other formats are converted to PNG before upload when possible. Requests time out after 15 seconds. On 2026-10-22, an upload health check returned HTTP 403 (`Multipart requests are disabled.`), so remote decoding should not be relied on for availability.
 
 ---
 

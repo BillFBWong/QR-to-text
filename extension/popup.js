@@ -1,3 +1,6 @@
+import { createQRDecoder } from './qr-decoder.js';
+
+const decodeQR = createQRDecoder(globalThis.jsQR);
 
 // Elements
 const views = {
@@ -46,13 +49,15 @@ async function processFile(file) {
   const objectUrl = URL.createObjectURL(file);
 
   try {
-    const data = await decodeQR(objectUrl, file);
+    const { data, error } = await decodeQR(objectUrl, file);
     if (data) {
       showResult(data, objectUrl);
     } else {
-      showError("Could not detect a QR code. Try a clearer image.");
+      URL.revokeObjectURL(objectUrl);
+      showError(error);
     }
   } catch (e) {
+    URL.revokeObjectURL(objectUrl);
     console.error(e);
     showError("An error occurred during decoding.");
   }
@@ -101,54 +106,6 @@ function handleAutoClose() {
   if (autoCloseCheckbox.checked) {
     setTimeout(() => window.close(), 300);
   }
-}
-
-// --- Decoding Logic (Native + API Fallback) ---
-async function decodeQR(src, fileBlob) {
-  const img = new Image();
-  img.crossOrigin = "Anonymous";
-  img.src = src;
-  
-  await new Promise((resolve, reject) => {
-    img.onload = resolve;
-    img.onerror = reject;
-  });
-
-  // 1. Try Native BarcodeDetector (Chrome built-in)
-  if ('BarcodeDetector' in window) {
-    try {
-      const formats = await BarcodeDetector.getSupportedFormats();
-      if (formats.includes('qr_code')) {
-        const detector = new BarcodeDetector({ formats: ['qr_code'] });
-        const codes = await detector.detect(img);
-        if (codes.length > 0) return codes[0].rawValue;
-      }
-    } catch (e) {
-      console.warn("Native detection failed or rejected", e);
-    }
-  }
-
-  // 2. Fallback to API (qrserver.com)
-  try {
-    const formData = new FormData();
-    formData.append('file', fileBlob);
-
-    const response = await fetch('https://api.qrserver.com/v1/read-qr-code/', {
-      method: 'POST',
-      body: formData
-    });
-
-    if (response.ok) {
-      const json = await response.json();
-      if (json?.[0]?.symbol?.[0]?.data) {
-        return json[0].symbol[0].data;
-      }
-    }
-  } catch (e) {
-    console.warn("API fallback failed", e);
-  }
-
-  return null;
 }
 
 // --- Event Listeners ---
